@@ -31,6 +31,19 @@ python scripts/train_franka_lift.py \
   --headless
 ```
 
+If your Isaac Lab version uses a different internal layout, the wrapper auto-detects common paths such as:
+
+```text
+scripts/reinforcement_learning/rsl_rl/train.py
+source/standalone/workflows/rsl_rl/train.py
+```
+
+If detection still fails, locate the script with:
+
+```bash
+find ~/isaac_ws/IsaacLab -path '*rsl_rl/train.py'
+```
+
 Relative IK variant:
 
 ```bash
@@ -76,4 +89,3 @@ Development sequence:
 6. Register the custom bin-picking task as an Isaac Lab extension.
 
 The current `scripts/run_isaac_loop.py` remains the deterministic baseline and visualization/debug tool. The Isaac Lab workflow scripts provide the actual RL training path.
-

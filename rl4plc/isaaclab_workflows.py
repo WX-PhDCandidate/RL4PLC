@@ -42,10 +42,28 @@ def find_isaaclab_root(value: str | None = None, require_exists: bool = True) ->
 
 
 def workflow_script(root: Path, library: str, mode: str, require_exists: bool = True) -> Path:
-    path = root / "source" / "standalone" / "workflows" / library / f"{mode}.py"
-    if require_exists and not path.exists():
-        raise FileNotFoundError(f"Isaac Lab workflow script not found: {path}")
-    return path
+    candidates = [
+        root / "scripts" / "reinforcement_learning" / library / f"{mode}.py",
+        root / "source" / "standalone" / "workflows" / library / f"{mode}.py",
+        root / "scripts" / "rl_games" / library / f"{mode}.py",
+    ]
+    if not require_exists:
+        return candidates[0]
+
+    for path in candidates:
+        if path.exists():
+            return path
+
+    discovered = sorted(root.glob(f"**/{library}/{mode}.py"))
+    if discovered:
+        return discovered[0]
+
+    searched = "\n".join(f"  - {path}" for path in candidates)
+    raise FileNotFoundError(
+        f"Isaac Lab {library} {mode}.py script not found.\n"
+        f"Searched:\n{searched}\n"
+        f"Tip: run `find {root} -path '*{library}/{mode}.py'` on the server to locate your Isaac Lab layout."
+    )
 
 
 def build_train_command(
