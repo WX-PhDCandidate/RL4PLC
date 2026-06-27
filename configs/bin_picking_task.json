@@ -63,8 +63,10 @@
   },
   "episode": {
     "settle_steps": 90,
+    "move_steps": 45,
+    "attach_steps": 18,
+    "release_steps": 45,
     "max_motion_steps": 240,
     "success_radius": 0.14
   }
 }
-

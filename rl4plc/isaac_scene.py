@@ -45,6 +45,7 @@ class IsaacBinPickingLoop:
         detections = []
         plans = []
         results = []
+        trajectories = []
 
         for episode_id in range(self.episodes):
             workpiece = self.randomizer.sample_one(episode_id)
@@ -53,12 +54,13 @@ class IsaacBinPickingLoop:
 
             detection = self.perception.detect(workpiece)
             plan = self.planner.plan(workpiece, detection)
-            placed = self._execute_visual_pick_place(prim, plan)
+            placed, trajectory = self._execute_visual_pick_place(prim, plan, workpiece, episode_id)
             result = self.task.run_baseline(episode_id, plan, placed_in_target=placed)
 
             detections.append(detection)
             plans.append(plan.to_dict())
             results.append(result)
+            trajectories.extend(trajectory)
             append_episode_csv(self.run_dir / "episodes.csv", result)
             print(
                 f"[Isaac episode {episode_id:03d}] {workpiece.spec.type} -> {plan.target_bin} "
@@ -68,6 +70,7 @@ class IsaacBinPickingLoop:
 
         write_jsonl(self.run_dir / "detections.jsonl", detections)
         write_jsonl(self.run_dir / "grasp_plans.jsonl", plans)
+        write_jsonl(self.run_dir / "trajectory.jsonl", trajectories)
         summary = summarize(results)
         (self.run_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
         return summary
@@ -180,13 +183,148 @@ class IsaacBinPickingLoop:
             )
         return self.world.scene.add(prim)
 
-    def _execute_visual_pick_place(self, prim, plan: GraspPlan) -> bool:
-        for pose in (plan.pregrasp_pose, plan.grasp_pose, plan.lift_pose, plan.place_pose):
+    def _execute_visual_pick_place(
+        self,
+        prim,
+        plan: GraspPlan,
+        workpiece: WorkpieceState,
+        episode_id: int,
+    ) -> tuple[bool, list[dict]]:
+        move_steps = int(self.config["episode"].get("move_steps", 45))
+        attach_steps = int(self.config["episode"].get("attach_steps", 18))
+        release_steps = int(self.config["episode"].get("release_steps", 45))
+        grasp_gap = self._attached_center_gap(workpiece)
+        release_pose = self._release_pose(plan, workpiece)
+        trajectory: list[dict] = []
+
+        current = Pose6D(0.0, 0.0, 0.45)
+        current = self._move_segment(current, plan.pregrasp_pose, move_steps, "pregrasp", episode_id, trajectory)
+        current = self._move_segment(current, plan.grasp_pose, move_steps, "approach", episode_id, trajectory)
+
+        for step_index in range(attach_steps):
+            object_pose = self._object_pose_from_tcp(current, grasp_gap)
+            self._set_prim_pose(prim, object_pose)
+            self._record_trajectory(trajectory, episode_id, "attach", step_index, current, object_pose)
+            self._step(1)
+
+        current = self._move_segment(
+            current,
+            plan.lift_pose,
+            move_steps,
+            "lift",
+            episode_id,
+            trajectory,
+            prim=prim,
+            grasp_gap=grasp_gap,
+        )
+        current = self._move_segment(
+            current,
+            plan.place_pose,
+            move_steps,
+            "transfer",
+            episode_id,
+            trajectory,
+            prim=prim,
+            grasp_gap=grasp_gap,
+        )
+
+        self._set_prim_pose(prim, release_pose)
+        self._move_marker(plan.place_pose)
+        for step_index in range(release_steps):
+            self._record_trajectory(trajectory, episode_id, "release", step_index, plan.place_pose, release_pose)
+            self._step(1)
+
+        return self._is_inside_target(release_pose, plan.target_bin), trajectory
+
+    def _move_segment(
+        self,
+        start: Pose6D,
+        end: Pose6D,
+        steps: int,
+        phase: str,
+        episode_id: int,
+        trajectory: list[dict],
+        prim=None,
+        grasp_gap: float | None = None,
+    ) -> Pose6D:
+        steps = max(1, int(steps))
+        for step_index in range(steps):
+            t = (step_index + 1) / steps
+            pose = self._interpolate_pose(start, end, self._smoothstep(t))
             self._move_marker(pose)
-            self._step(35)
-        self._set_prim_pose(prim, plan.place_pose.lifted(-0.18))
-        self._step(45)
-        return self._is_inside_target(plan.place_pose, plan.target_bin)
+            object_pose = None
+            if prim is not None and grasp_gap is not None:
+                object_pose = self._object_pose_from_tcp(pose, grasp_gap)
+                self._set_prim_pose(prim, object_pose)
+            self._record_trajectory(trajectory, episode_id, phase, step_index, pose, object_pose)
+            self._step(1)
+        return end
+
+    @staticmethod
+    def _interpolate_pose(start: Pose6D, end: Pose6D, t: float) -> Pose6D:
+        return Pose6D(
+            x=start.x + (end.x - start.x) * t,
+            y=start.y + (end.y - start.y) * t,
+            z=start.z + (end.z - start.z) * t,
+            rx=start.rx + (end.rx - start.rx) * t,
+            ry=start.ry + (end.ry - start.ry) * t,
+            rz=start.rz + (end.rz - start.rz) * t,
+        )
+
+    @staticmethod
+    def _smoothstep(t: float) -> float:
+        t = min(1.0, max(0.0, t))
+        return t * t * (3.0 - 2.0 * t)
+
+    def _attached_center_gap(self, workpiece: WorkpieceState) -> float:
+        half_height = workpiece.spec.height * 0.5 if workpiece.spec.height else workpiece.spec.size[2] * 0.5
+        return half_height + float(self.config["grasp"].get("grasp_clearance", 0.018))
+
+    @staticmethod
+    def _object_pose_from_tcp(tcp_pose: Pose6D, grasp_gap: float) -> Pose6D:
+        return Pose6D(
+            x=tcp_pose.x,
+            y=tcp_pose.y,
+            z=tcp_pose.z - grasp_gap,
+            rx=tcp_pose.rx,
+            ry=tcp_pose.ry,
+            rz=tcp_pose.rz,
+        )
+
+    def _release_pose(self, plan: GraspPlan, workpiece: WorkpieceState) -> Pose6D:
+        raw = self.config["scene"]["target_bins"][plan.target_bin]
+        bin_z = float(raw["position"][2])
+        bin_height = float(raw["size"][2])
+        half_height = workpiece.spec.height * 0.5 if workpiece.spec.height else workpiece.spec.size[2] * 0.5
+        return Pose6D(
+            x=float(raw["position"][0]),
+            y=float(raw["position"][1]),
+            z=bin_z + bin_height * 0.5 + half_height + 0.01,
+            rx=0.0,
+            ry=0.0,
+            rz=plan.place_pose.rz,
+        )
+
+    @staticmethod
+    def _record_trajectory(
+        trajectory: list[dict],
+        episode_id: int,
+        phase: str,
+        step_index: int,
+        tcp_pose: Pose6D,
+        object_pose: Pose6D | None,
+    ) -> None:
+        if step_index % 5 != 0:
+            return
+        trajectory.append(
+            {
+                "episode_id": episode_id,
+                "phase": phase,
+                "step": step_index,
+                "tcp_pose": tcp_pose.to_list(),
+                "object_pose": object_pose.to_list() if object_pose else None,
+            }
+        )
 
     def _move_marker(self, pose: Pose6D) -> None:
         if self.tcp_marker is not None and hasattr(self.tcp_marker, "set_world_pose"):

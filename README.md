@@ -52,6 +52,7 @@ For GUI:
 ```
 
 Outputs are written to `runs/`.
+The Isaac loop additionally writes `trajectory.jsonl`, which records baseline TCP and object poses by phase.
 
 See [docs/isaac_usage_ubuntu.md](docs/isaac_usage_ubuntu.md) for detailed steps.
 
@@ -65,4 +66,3 @@ See [docs/isaac_usage_ubuntu.md](docs/isaac_usage_ubuntu.md) for detailed steps.
 6. Replace ground-truth perception with RGB-D / point-cloud perception.
 7. Replace rule-based grasping with Isaac Lab reinforcement learning.
 8. Add domain randomization for sim-to-real transfer.
-

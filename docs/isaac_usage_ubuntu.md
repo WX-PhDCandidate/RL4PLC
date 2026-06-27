@@ -81,6 +81,7 @@ The scripts write:
 runs/isaac/episodes.csv
 runs/isaac/detections.jsonl
 runs/isaac/grasp_plans.jsonl
+runs/isaac/trajectory.jsonl
 runs/isaac/summary.json
 ```
 
