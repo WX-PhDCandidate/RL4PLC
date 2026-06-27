@@ -59,6 +59,18 @@ GUI run on Ubuntu desktop:
 ~/isaacsim/python.sh scripts/run_isaac_loop.py --episodes 3
 ```
 
+Keep the Isaac Sim window open after the baseline episodes finish:
+
+```bash
+~/isaacsim/python.sh scripts/run_isaac_loop.py --episodes 3 --keep-open
+```
+
+Or keep it open for a fixed time:
+
+```bash
+~/isaacsim/python.sh scripts/run_isaac_loop.py --episodes 3 --post-run-seconds 60
+```
+
 If your Isaac Sim path is different, replace `~/isaacsim/python.sh`.
 
 ## 5. Outputs
