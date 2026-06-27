@@ -89,3 +89,19 @@ Example:
 
 The current v0.1 baseline uses a TCP visual marker and ground-truth perception. The next development step is to connect this interface to a real articulation controller or Isaac Lab RL environment.
 
+## 7. Known Isaac Sim Runtime Note
+
+If Isaac Sim reports an error similar to:
+
+```text
+Simulation view object is invalidated and cannot be used again to call getVelocities
+```
+
+update to the latest repository version:
+
+```bash
+cd ~/isaac_ws/RL4PLC
+git pull --ff-only
+```
+
+The baseline avoids deleting dynamic objects during simulation and parks completed workpieces outside the workcell instead. This is intentional because runtime scene deletion can invalidate PhysX tensor views in some Isaac Sim builds.

@@ -64,7 +64,7 @@ class IsaacBinPickingLoop:
                 f"[Isaac episode {episode_id:03d}] {workpiece.spec.type} -> {plan.target_bin} "
                 f"success={result.success}"
             )
-            self._remove_prim(prim)
+            self._park_prim(prim, episode_id)
 
         write_jsonl(self.run_dir / "detections.jsonl", detections)
         write_jsonl(self.run_dir / "grasp_plans.jsonl", plans)
@@ -202,12 +202,12 @@ class IsaacBinPickingLoop:
         sx, sy, _ = raw["size"]
         return math.fabs(pose.x - bx) <= sx / 2 and math.fabs(pose.y - by) <= sy / 2
 
-    def _remove_prim(self, prim) -> None:
-        if hasattr(self.world.scene, "remove_object") and hasattr(prim, "name"):
-            try:
-                self.world.scene.remove_object(prim.name)
-            except Exception:
-                pass
+    def _park_prim(self, prim, episode_id: int) -> None:
+        # Do not remove dynamic objects while the simulator is running. Some Isaac Sim /
+        # PhysX versions invalidate tensor simulation views after scene removal, which can
+        # crash later calls such as getVelocities. Parking keeps the baseline stable.
+        self._set_prim_pose(prim, Pose6D(x=-4.0, y=-4.0 - episode_id * 0.08, z=0.35))
+        self._step(2)
 
     def _step(self, steps: int) -> None:
         for _ in range(int(steps)):
