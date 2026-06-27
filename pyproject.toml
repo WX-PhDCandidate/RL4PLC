@@ -1,0 +1,13 @@
+[project]
+name = "rl4plc"
+version = "0.1.0"
+description = "Isaac Sim bin-picking baseline for RL grasping research."
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["rl4plc*"]
+
+[tool.ruff]
+line-length = 120
+
