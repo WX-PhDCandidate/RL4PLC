@@ -59,6 +59,22 @@ The Isaac loop additionally writes `trajectory.jsonl`, which records baseline TC
 
 See [docs/isaac_usage_ubuntu.md](docs/isaac_usage_ubuntu.md) for detailed steps.
 
+## Isaac Lab RL Training
+
+The first RL milestone uses Isaac Lab's open-source Franka lift task:
+
+```bash
+python scripts/train_franka_lift.py --isaaclab-root ~/isaac_ws/IsaacLab --ik --num-envs 64 --max-iterations 500 --headless
+```
+
+Playback:
+
+```bash
+python scripts/play_franka_lift.py --isaaclab-root ~/isaac_ws/IsaacLab --ik --checkpoint /path/to/model.pt --num-envs 1
+```
+
+See [docs/rl_training.md](docs/rl_training.md).
+
 ## Research Roadmap
 
 1. Build a deterministic Isaac Sim baseline scene.
