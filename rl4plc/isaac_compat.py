@@ -16,6 +16,8 @@ def import_isaac_core():
     try:
         from isaacsim.core.api import World  # type: ignore
         from isaacsim.core.api.objects import DynamicCuboid, DynamicCylinder, FixedCuboid, VisualCuboid  # type: ignore
+        from isaacsim.core.api.robots import Robot  # type: ignore
+        from isaacsim.core.utils.types import ArticulationAction  # type: ignore
         from isaacsim.core.utils.stage import add_reference_to_stage  # type: ignore
         from isaacsim.core.utils.nucleus import get_assets_root_path  # type: ignore
 
@@ -25,12 +27,16 @@ def import_isaac_core():
             "DynamicCylinder": DynamicCylinder,
             "FixedCuboid": FixedCuboid,
             "VisualCuboid": VisualCuboid,
+            "Robot": Robot,
+            "ArticulationAction": ArticulationAction,
             "add_reference_to_stage": add_reference_to_stage,
             "get_assets_root_path": get_assets_root_path,
         }
     except Exception:
         from omni.isaac.core import World  # type: ignore
         from omni.isaac.core.objects import DynamicCuboid, DynamicCylinder, FixedCuboid, VisualCuboid  # type: ignore
+        from omni.isaac.core.robots import Robot  # type: ignore
+        from omni.isaac.core.utils.types import ArticulationAction  # type: ignore
         from omni.isaac.core.utils.nucleus import get_assets_root_path  # type: ignore
         from omni.isaac.core.utils.stage import add_reference_to_stage  # type: ignore
 
@@ -40,6 +46,8 @@ def import_isaac_core():
             "DynamicCylinder": DynamicCylinder,
             "FixedCuboid": FixedCuboid,
             "VisualCuboid": VisualCuboid,
+            "Robot": Robot,
+            "ArticulationAction": ArticulationAction,
             "add_reference_to_stage": add_reference_to_stage,
             "get_assets_root_path": get_assets_root_path,
         }
@@ -54,4 +62,3 @@ def import_camera():
         from omni.isaac.sensor import Camera  # type: ignore
 
         return Camera
-

@@ -21,10 +21,32 @@
   },
   "robot": {
     "name": "robot",
-    "usd_path": "",
+    "model": "franka_panda",
+    "usd_path": "AUTO_FRANKA",
+    "prim_path": "/World/Robot",
     "base_position": [0.0, 0.0, 0.0],
-    "home_joints": [0.0, -0.7, 0.8, 0.0, 1.1, 0.0],
+    "joint_names": [
+      "panda_joint1",
+      "panda_joint2",
+      "panda_joint3",
+      "panda_joint4",
+      "panda_joint5",
+      "panda_joint6",
+      "panda_joint7",
+      "panda_finger_joint1",
+      "panda_finger_joint2"
+    ],
+    "home_joints": [0.0, -0.65, 0.0, -2.25, 0.0, 1.85, 0.78, 0.04, 0.04],
+    "waypoints": {
+      "pregrasp": [0.35, -0.80, 0.20, -2.15, 0.10, 1.90, 0.95, 0.04, 0.04],
+      "grasp": [0.42, -0.62, 0.22, -2.38, 0.08, 1.78, 0.92, 0.00, 0.00],
+      "lift": [0.35, -0.92, 0.18, -2.05, 0.10, 2.10, 0.96, 0.00, 0.00],
+      "red": [0.90, -0.75, 0.10, -2.05, 0.20, 2.10, 1.20, 0.04, 0.04],
+      "blue": [0.45, -0.70, 0.00, -2.10, 0.15, 2.00, 1.05, 0.04, 0.04],
+      "green": [0.10, -0.78, -0.10, -2.08, 0.10, 2.05, 0.90, 0.04, 0.04]
+    },
     "tool_offset": [0.0, 0.0, 0.11],
+    "use_articulation": true,
     "use_visual_tcp_marker": true
   },
   "workpieces": [

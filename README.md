@@ -14,6 +14,9 @@ random workpiece in source bin
 
 This repository intentionally drops the old ROS2/Gazebo path. The current target runtime is Ubuntu + NVIDIA Isaac Sim, with Isaac Lab / RL training planned after the baseline loop is stable.
 
+The baseline robot is **Franka Emika Panda**, loaded from Isaac Sim's packaged USD asset. Franka is used because it is a mainstream manipulation baseline in Isaac Sim / Isaac Lab examples and RL environments, including Isaac Lab lift-cube Franka variants and Isaac Sim's official Franka pick-and-place example.
+See [docs/robot_choice.md](docs/robot_choice.md) for the selection rationale and primary references.
+
 ## Project Layout
 
 ```text

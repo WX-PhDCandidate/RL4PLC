@@ -87,7 +87,7 @@ runs/isaac/summary.json
 
 ## 6. Robot USD
 
-By default, the script tries to load Isaac's Franka USD as a visual robot reference. For your own robot, edit:
+By default, the script uses Isaac Sim's built-in Franka Panda USD. This is intentional: Franka is the mainstream manipulation baseline used by many Isaac Lab / Isaac Sim examples and RL tasks. To override it, edit:
 
 ```text
 configs/bin_picking_task.json
@@ -97,10 +97,11 @@ robot.usd_path
 Example:
 
 ```json
-"usd_path": "/home/user/assets/robots/my_robot.usd"
+  "model": "franka_panda",
+  "usd_path": "/home/user/assets/robots/my_robot.usd"
 ```
 
-The current v0.1 baseline uses a TCP visual marker and ground-truth perception. The next development step is to connect this interface to a real articulation controller or Isaac Lab RL environment.
+The current baseline drives the Franka articulation through preset joint waypoints while keeping the TCP marker and workpiece trajectory explicit. The next development step is to replace these waypoint presets with IK and then an Isaac Lab RL policy.
 
 ## 7. Known Isaac Sim Runtime Note
 

@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 
 from rl4plc.config import load_config
+from rl4plc.franka_controller import FrankaWaypointController
 from rl4plc.grasp_planner import RuleBasedGraspPlanner
 from rl4plc.isaac_compat import import_camera, import_isaac_core
 from rl4plc.logging_utils import append_episode_csv, ensure_run_dir, summarize, write_jsonl
@@ -31,14 +32,17 @@ class IsaacBinPickingLoop:
         self.task = PickPlaceStateMachine()
         self.tcp_marker = None
         self.camera = None
+        self.robot_controller: FrankaWaypointController | None = None
 
     def setup(self) -> None:
         self.world.scene.add_default_ground_plane()
         self._add_bins()
         self._add_camera()
-        self._add_robot_reference_if_configured()
+        self._add_robot()
         self._add_tcp_marker()
         self.world.reset()
+        if self.robot_controller is not None:
+            self.robot_controller.initialize_after_reset()
 
     def run(self) -> dict:
         self.setup()
@@ -131,19 +135,13 @@ class IsaacBinPickingLoop:
         if hasattr(self.camera, "set_focal_length"):
             self.camera.set_focal_length(float(camera_cfg.get("focal_length", 24.0)))
 
-    def _add_robot_reference_if_configured(self) -> None:
+    def _add_robot(self) -> None:
         robot_cfg = self.config["robot"]
-        usd_path = robot_cfg.get("usd_path", "")
-        if not usd_path:
-            assets_root = self.core["get_assets_root_path"]()
-            if assets_root:
-                usd_path = f"{assets_root}/Isaac/Robots/Franka/franka.usd"
-        if usd_path:
-            try:
-                self.core["add_reference_to_stage"](usd_path=usd_path, prim_path="/World/Robot")
-                print(f"Loaded robot reference: {usd_path}")
-            except Exception as exc:
-                print(f"Robot USD not loaded, continuing with TCP marker baseline: {exc}")
+        if robot_cfg.get("model") == "franka_panda" and robot_cfg.get("use_articulation", True):
+            self.robot_controller = FrankaWaypointController(self.world, self.core, robot_cfg)
+            self.robot_controller.add_to_stage()
+            return
+        print("No mainstream robot articulation configured; continuing with TCP marker baseline.")
 
     def _add_tcp_marker(self) -> None:
         if not self.config["robot"].get("use_visual_tcp_marker", True):
@@ -214,6 +212,7 @@ class IsaacBinPickingLoop:
             "lift",
             episode_id,
             trajectory,
+            target_bin=plan.target_bin,
             prim=prim,
             grasp_gap=grasp_gap,
         )
@@ -224,10 +223,12 @@ class IsaacBinPickingLoop:
             "transfer",
             episode_id,
             trajectory,
+            target_bin=plan.target_bin,
             prim=prim,
             grasp_gap=grasp_gap,
         )
 
+        self._apply_robot_waypoint("release", plan.target_bin)
         self._set_prim_pose(prim, release_pose)
         self._move_marker(plan.place_pose)
         for step_index in range(release_steps):
@@ -244,14 +245,19 @@ class IsaacBinPickingLoop:
         phase: str,
         episode_id: int,
         trajectory: list[dict],
+        target_bin: str | None = None,
         prim=None,
         grasp_gap: float | None = None,
     ) -> Pose6D:
         steps = max(1, int(steps))
+        joint_start = self._current_robot_joints()
+        joint_end = self._robot_waypoint(phase, target_bin)
         for step_index in range(steps):
             t = (step_index + 1) / steps
-            pose = self._interpolate_pose(start, end, self._smoothstep(t))
+            eased = self._smoothstep(t)
+            pose = self._interpolate_pose(start, end, eased)
             self._move_marker(pose)
+            self._apply_interpolated_robot_joints(joint_start, joint_end, eased)
             object_pose = None
             if prim is not None and grasp_gap is not None:
                 object_pose = self._object_pose_from_tcp(pose, grasp_gap)
@@ -259,6 +265,31 @@ class IsaacBinPickingLoop:
             self._record_trajectory(trajectory, episode_id, phase, step_index, pose, object_pose)
             self._step(1)
         return end
+
+    def _current_robot_joints(self) -> np.ndarray | None:
+        if self.robot_controller is None:
+            return None
+        return np.array(self.robot_controller.current_joints, dtype=float)
+
+    def _robot_waypoint(self, phase: str, target_bin: str | None) -> np.ndarray | None:
+        if self.robot_controller is None:
+            return None
+        return self.robot_controller.waypoint(phase, target_bin)
+
+    def _apply_interpolated_robot_joints(
+        self,
+        start: np.ndarray | None,
+        end: np.ndarray | None,
+        t: float,
+    ) -> None:
+        if self.robot_controller is None or start is None or end is None:
+            return
+        self.robot_controller.apply_joint_positions(start + (end - start) * t)
+
+    def _apply_robot_waypoint(self, phase: str, target_bin: str | None = None) -> None:
+        if self.robot_controller is None:
+            return
+        self.robot_controller.apply_joint_positions(self.robot_controller.waypoint(phase, target_bin))
 
     @staticmethod
     def _interpolate_pose(start: Pose6D, end: Pose6D, t: float) -> Pose6D:
