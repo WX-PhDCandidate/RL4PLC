@@ -13,6 +13,7 @@ def import_simulation_app():
 
 
 def import_isaac_core():
+    Franka = None
     try:
         from isaacsim.core.api import World  # type: ignore
         from isaacsim.core.api.objects import DynamicCuboid, DynamicCylinder, FixedCuboid, VisualCuboid  # type: ignore
@@ -20,6 +21,10 @@ def import_isaac_core():
         from isaacsim.core.utils.types import ArticulationAction  # type: ignore
         from isaacsim.core.utils.stage import add_reference_to_stage  # type: ignore
         from isaacsim.core.utils.nucleus import get_assets_root_path  # type: ignore
+        try:
+            from isaacsim.robot.manipulators.examples.franka import Franka  # type: ignore
+        except Exception:
+            Franka = None
 
         return {
             "World": World,
@@ -28,6 +33,7 @@ def import_isaac_core():
             "FixedCuboid": FixedCuboid,
             "VisualCuboid": VisualCuboid,
             "Robot": Robot,
+            "Franka": Franka,
             "ArticulationAction": ArticulationAction,
             "add_reference_to_stage": add_reference_to_stage,
             "get_assets_root_path": get_assets_root_path,
@@ -39,6 +45,10 @@ def import_isaac_core():
         from omni.isaac.core.utils.types import ArticulationAction  # type: ignore
         from omni.isaac.core.utils.nucleus import get_assets_root_path  # type: ignore
         from omni.isaac.core.utils.stage import add_reference_to_stage  # type: ignore
+        try:
+            from omni.isaac.franka import Franka  # type: ignore
+        except Exception:
+            Franka = None
 
         return {
             "World": World,
@@ -47,6 +57,7 @@ def import_isaac_core():
             "FixedCuboid": FixedCuboid,
             "VisualCuboid": VisualCuboid,
             "Robot": Robot,
+            "Franka": Franka,
             "ArticulationAction": ArticulationAction,
             "add_reference_to_stage": add_reference_to_stage,
             "get_assets_root_path": get_assets_root_path,

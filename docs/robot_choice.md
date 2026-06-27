@@ -14,5 +14,4 @@ Primary references:
 - Isaac Sim Franka Pick and Place: https://docs.isaacsim.omniverse.nvidia.com/5.1.0/examples/manipulation_franka_pick_place.html
 - Isaac Sim RL policy examples: https://docs.isaacsim.omniverse.nvidia.com/5.1.0/robot_simulation/ext_isaacsim_robot_policy_example.html
 
-This project does not rebuild the robot model. It references the packaged Franka USD from the local Isaac Sim installation and drives it with baseline joint waypoints. The next step is to replace waypoint playback with IK, then with an Isaac Lab RL policy.
-
+This project does not rebuild the robot model. It first tries to use Isaac Sim's official Franka manipulator class, then falls back to the packaged Franka USD as a visual reference if the class is unavailable. The next step is to replace waypoint playback with IK, then with an Isaac Lab RL policy.

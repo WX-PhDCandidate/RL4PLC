@@ -87,7 +87,7 @@ runs/isaac/summary.json
 
 ## 6. Robot USD
 
-By default, the script uses Isaac Sim's built-in Franka Panda USD. This is intentional: Franka is the mainstream manipulation baseline used by many Isaac Lab / Isaac Sim examples and RL tasks. To override it, edit:
+By default, the script uses Isaac Sim's official Franka Panda manipulator class when available. This avoids guessing the articulation root path inside the USD. If that class is unavailable, it falls back to loading the Franka USD as a visual reference only. To override the visual USD fallback, edit:
 
 ```text
 configs/bin_picking_task.json

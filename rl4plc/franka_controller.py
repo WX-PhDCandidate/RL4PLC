@@ -24,6 +24,11 @@ class FrankaWaypointController:
         self.loaded_usd_path = ""
 
     def add_to_stage(self) -> None:
+        Franka = self.core.get("Franka")
+        if Franka is not None:
+            self._add_official_franka(Franka)
+            return
+
         usd_path = self._resolve_usd_path()
         if not usd_path:
             print("Franka USD path not found; continuing with TCP marker only.")
@@ -31,20 +36,33 @@ class FrankaWaypointController:
 
         prim_path = self.config.get("prim_path", "/World/Robot")
         try:
+            # Fallback only: use the USD as a visual reference. We deliberately do not
+            # wrap it with Robot(...) here, because Isaac Sim versions differ in where
+            # the Franka USD places its ArticulationRootAPI. Binding the wrong root
+            # causes PhysX tensor errors such as "Pattern did not match any rigid bodies".
             self.core["add_reference_to_stage"](usd_path=usd_path, prim_path=prim_path)
-            Robot = self.core["Robot"]
+            self.loaded_usd_path = usd_path
+            self.robot = None
+            print(f"Loaded Franka USD as visual reference only: {usd_path}")
+        except Exception as exc:
+            self.robot = None
+            print(f"Franka USD not loaded, continuing with TCP marker only: {exc}")
+
+    def _add_official_franka(self, Franka) -> None:
+        prim_path = self.config.get("prim_path", "/World/Franka")
+        try:
             self.robot = self.world.scene.add(
-                Robot(
+                Franka(
                     prim_path=prim_path,
                     name=self.config.get("name", "franka_panda"),
                     position=np.array(self.config.get("base_position", [0.0, 0.0, 0.0]), dtype=float),
                 )
             )
-            self.loaded_usd_path = usd_path
-            print(f"Loaded mainstream RL manipulator: Franka Panda ({usd_path})")
+            self.loaded_usd_path = "isaacsim.robot.manipulators.examples.franka.Franka"
+            print(f"Loaded mainstream RL manipulator with official Franka class at {prim_path}")
         except Exception as exc:
             self.robot = None
-            print(f"Franka articulation not loaded, continuing with TCP marker only: {exc}")
+            print(f"Official Franka class failed, continuing with TCP marker only: {exc}")
 
     def initialize_after_reset(self) -> None:
         if self.robot is None:
