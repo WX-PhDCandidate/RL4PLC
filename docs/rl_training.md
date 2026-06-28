@@ -18,6 +18,18 @@ References:
 
 ## Train
 
+First inspect which Franka tasks in your Isaac Lab installation actually provide an RL config for the selected library:
+
+```bash
+python scripts/list_isaaclab_tasks.py \
+  --isaaclab-root ~/isaac_ws/IsaacLab \
+  --contains Franka \
+  --library rsl_rl \
+  --show-all
+```
+
+Only tasks marked `OK` have `rsl_rl_cfg_entry_point` and can be trained through `scripts/reinforcement_learning/rsl_rl/train.py`.
+
 From this repository on the server:
 
 ```bash
@@ -54,6 +66,17 @@ python scripts/train_franka_lift.py \
   --num-envs 64 \
   --max-iterations 500 \
   --headless
+```
+
+If the relative IK task reports only `robomimic: BC` and no `rsl_rl_cfg_entry_point`, do not use `--ik` for PPO training in that Isaac Lab version. Use a task shown as `OK` by `list_isaaclab_tasks.py`, for example the joint-position Franka lift task if available:
+
+```bash
+python scripts/train_franka_lift.py \
+  --isaaclab-root ~/isaac_ws/IsaacLab \
+  --task Isaac-Lift-Cube-Franka-v0 \
+  --library rsl_rl \
+  --num-envs 8 \
+  --max-iterations 20
 ```
 
 Preview command without running:

@@ -130,6 +130,17 @@ def build_play_command(
     return IsaacLabCommand(isaaclab_root=isaaclab_root, command=command)
 
 
+def build_python_command(isaaclab_root: Path, script: Path, script_args: list[str] | None = None) -> IsaacLabCommand:
+    command = [
+        str(isaaclab_root / "isaaclab.sh"),
+        "-p",
+        str(script),
+    ]
+    if script_args:
+        command.extend(script_args)
+    return IsaacLabCommand(isaaclab_root=isaaclab_root, command=command)
+
+
 def run_command(command: IsaacLabCommand, dry_run: bool = False) -> int:
     print(f"IsaacLab root: {command.isaaclab_root}")
     print(f"Command: {command.as_shell_text()}")
