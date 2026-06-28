@@ -25,6 +25,8 @@ rl4plc/                            Pure Python task logic
 scripts/run_mock_loop.py            Runs the loop without Isaac Sim
 scripts/run_isaac_loop.py           Runs the loop inside Isaac Sim Python
 scripts/run_franka_bin_pick.py      Runs the first Franka grasp-and-drop bin-pick demo
+scripts/train_rl4plc_bin_pick.py    Trains the RL4PLC Isaac Lab task
+scripts/play_rl4plc_bin_pick.py     Replays the RL4PLC Isaac Lab task
 docs/isaac_usage_ubuntu.md          Ubuntu Isaac Sim usage notes
 tests/                              Lightweight tests for the baseline logic
 ```
@@ -77,16 +79,19 @@ See [docs/isaac_usage_ubuntu.md](docs/isaac_usage_ubuntu.md) for detailed steps.
 
 ## Isaac Lab RL Training
 
-The first RL milestone uses Isaac Lab's open-source Franka lift task:
+The project task id is `RL4PLC-Franka-BinPick-v0`. Stage 1 registers this task
+on top of Isaac Lab's trainable Franka lift environment so PPO training and
+replay work with the RL4PLC task name before we replace the environment with
+full source-bin and target-bin placement rewards.
 
 ```bash
-python scripts/train_franka_lift.py --isaaclab-root ~/isaac_ws/IsaacLab --task Isaac-Lift-Cube-Franka-v0 --num-envs 64 --max-iterations 500 --headless
+python scripts/train_rl4plc_bin_pick.py --isaaclab-root ~/isaac_ws/IsaacLab --num-envs 64 --max-iterations 500 --headless
 ```
 
 Playback:
 
 ```bash
-python scripts/play_franka_lift.py --isaaclab-root ~/isaac_ws/IsaacLab --task Isaac-Lift-Cube-Franka-v0 --checkpoint /path/to/model.pt --num-envs 1
+python scripts/play_rl4plc_bin_pick.py --isaaclab-root ~/isaac_ws/IsaacLab --latest --num-envs 1
 ```
 
 See [docs/rl_training.md](docs/rl_training.md).

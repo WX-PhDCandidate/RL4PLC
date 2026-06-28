@@ -6,8 +6,7 @@ requires-python = ">=3.10"
 dependencies = []
 
 [tool.setuptools.packages.find]
-include = ["rl4plc*"]
+include = ["rl4plc*", "rl4plc_isaaclab*"]
 
 [tool.ruff]
 line-length = 120
-

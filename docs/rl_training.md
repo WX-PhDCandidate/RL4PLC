@@ -18,6 +18,53 @@ References:
 
 ## Train
 
+### RL4PLC task
+
+Train the project task id:
+
+```bash
+cd ~/isaac_ws/RL4PLC
+python scripts/train_rl4plc_bin_pick.py \
+  --isaaclab-root ~/isaac_ws/IsaacLab \
+  --num-envs 64 \
+  --max-iterations 500 \
+  --headless
+```
+
+Short smoke test:
+
+```bash
+python scripts/train_rl4plc_bin_pick.py \
+  --isaaclab-root ~/isaac_ws/IsaacLab \
+  --num-envs 8 \
+  --max-iterations 20
+```
+
+The wrapper registers `RL4PLC-Franka-BinPick-v0` in the same Python process
+before launching Isaac Lab's official rsl_rl workflow. Stage 1 reuses
+`Isaac-Lift-Cube-Franka-v0` internally, because that task already has a working
+Franka PPO configuration in your installation. This gives us a trainable and
+replayable project task first; Stage 2 replaces the env config with source-bin,
+target-bin and correct-placement rewards.
+
+Preview command without running:
+
+```bash
+python scripts/train_rl4plc_bin_pick.py \
+  --isaaclab-root ~/isaac_ws/IsaacLab \
+  --num-envs 8 \
+  --max-iterations 20 \
+  --dry-run
+```
+
+Probe project task registration:
+
+```bash
+~/isaac_ws/IsaacLab/isaaclab.sh -p tools/rl4plc_task_probe.py --headless
+```
+
+### Built-in task check
+
 First inspect which Franka tasks in your Isaac Lab installation actually provide an RL config for the selected library:
 
 ```bash
@@ -89,6 +136,29 @@ python scripts/train_franka_lift.py --isaaclab-root ~/isaac_ws/IsaacLab --ik --d
 
 ## Play
 
+Replay the latest RL4PLC checkpoint:
+
+```bash
+cd ~/isaac_ws/RL4PLC
+python scripts/play_rl4plc_bin_pick.py \
+  --isaaclab-root ~/isaac_ws/IsaacLab \
+  --latest \
+  --num-envs 1
+```
+
+Replay a specific checkpoint:
+
+```bash
+python scripts/play_rl4plc_bin_pick.py \
+  --isaaclab-root ~/isaac_ws/IsaacLab \
+  --checkpoint /path/to/model.pt \
+  --num-envs 1
+```
+
+If you want GUI playback, do not pass `--headless`.
+
+### Built-in task playback
+
 After training, use the checkpoint path printed by Isaac Lab:
 
 ```bash
@@ -100,17 +170,16 @@ python scripts/play_franka_lift.py \
   --num-envs 1
 ```
 
-If you want GUI playback, do not pass `--headless`.
-
 ## How This Connects to RL4PLC
 
 Development sequence:
 
-1. Train and play Isaac Lab's open-source Franka lift task.
-2. Record what observation/action/reward terms are required for reliable grasping.
-3. Replace the single cube with our three workpiece types.
-4. Add target-bin reward and wrong-bin penalty.
-5. Add fixed RGB-D camera observation or point-cloud-derived object pose.
-6. Register the custom bin-picking task as an Isaac Lab extension.
+1. Register and train `RL4PLC-Franka-BinPick-v0`.
+2. Reuse Isaac Lab's Franka lift task for the first stable PPO train/replay milestone.
+3. Record what observation/action/reward terms are required for reliable grasping.
+4. Replace the single cube with our three workpiece types.
+5. Add target-bin reward and wrong-bin penalty.
+6. Add fixed RGB-D camera observation or point-cloud-derived object pose.
+7. Replace the Stage-1 alias with a full custom bin-picking env config.
 
 The current `scripts/run_isaac_loop.py` remains the deterministic baseline and visualization/debug tool. The Isaac Lab workflow scripts provide the actual RL training path.
