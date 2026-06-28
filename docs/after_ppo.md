@@ -47,11 +47,12 @@ The first custom-task specification is in:
 configs/bin_picking_rl_spec.json
 ```
 
-`RL4PLC-Franka-BinPick-v0` currently registers as the Stage-1 trainable task on
-top of Isaac Lab's Franka lift environment. The intended migration is:
+`RL4PLC-Franka-BinPick-v0` now registers as the Stage-2 single-object source-tray
+to target-bin task. The intended migration after this is:
 
 1. Keep Franka, PPO workflow and the project task id unchanged.
-2. Replace cube object with one selected workpiece.
-3. Replace lift reward with correct-bin placement reward.
+2. Tune source-tray placement reward until the object reliably reaches the red bin.
+3. Replace cube object with one selected workpiece.
 4. Add three workpiece types and target-bin mapping.
-5. Add RGB-D / point-cloud observation after pose-based RL works.
+5. Add wrong-bin penalty and multi-bin curriculum.
+6. Add RGB-D / point-cloud observation after pose-based RL works.

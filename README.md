@@ -79,10 +79,11 @@ See [docs/isaac_usage_ubuntu.md](docs/isaac_usage_ubuntu.md) for detailed steps.
 
 ## Isaac Lab RL Training
 
-The project task id is `RL4PLC-Franka-BinPick-v0`. Stage 1 registers this task
-on top of Isaac Lab's trainable Franka lift environment so PPO training and
-replay work with the RL4PLC task name before we replace the environment with
-full source-bin and target-bin placement rewards.
+The project task id is `RL4PLC-Franka-BinPick-v0`. Stage 2 registers this task
+as a real Isaac Lab scene with the RL4PLC source tray, target bin, Franka, object
+randomization and placement reward. It still reuses Isaac Lab's official Franka
+PPO runner config so training remains compatible with the workflow you already
+ran successfully.
 
 ```bash
 python scripts/train_rl4plc_bin_pick.py --isaaclab-root ~/isaac_ws/IsaacLab --num-envs 64 --max-iterations 500 --headless

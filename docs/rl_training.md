@@ -41,11 +41,11 @@ python scripts/train_rl4plc_bin_pick.py \
 ```
 
 The wrapper registers `RL4PLC-Franka-BinPick-v0` in the same Python process
-before launching Isaac Lab's official rsl_rl workflow. Stage 1 reuses
-`Isaac-Lift-Cube-Franka-v0` internally, because that task already has a working
-Franka PPO configuration in your installation. This gives us a trainable and
-replayable project task first; Stage 2 replaces the env config with source-bin,
-target-bin and correct-placement rewards.
+before launching Isaac Lab's official rsl_rl workflow. Stage 2 uses a project
+env config with the RL4PLC source tray, red target bin, randomized object start
+inside the tray, target command above the bin, and an object-in-bin reward. The
+PPO runner config is still reused from Isaac Lab's Franka lift task to keep the
+training workflow compatible with your installation.
 
 Preview command without running:
 
@@ -175,11 +175,11 @@ python scripts/play_franka_lift.py \
 Development sequence:
 
 1. Register and train `RL4PLC-Franka-BinPick-v0`.
-2. Reuse Isaac Lab's Franka lift task for the first stable PPO train/replay milestone.
-3. Record what observation/action/reward terms are required for reliable grasping.
+2. Train the Stage-2 single-object source-tray to target-bin task.
+3. Record what observation/action/reward terms are required for reliable placement.
 4. Replace the single cube with our three workpiece types.
-5. Add target-bin reward and wrong-bin penalty.
+5. Add multi-target-bin mapping and wrong-bin penalty.
 6. Add fixed RGB-D camera observation or point-cloud-derived object pose.
-7. Replace the Stage-1 alias with a full custom bin-picking env config.
+7. Add domain randomization for sim-to-real transfer.
 
 The current `scripts/run_isaac_loop.py` remains the deterministic baseline and visualization/debug tool. The Isaac Lab workflow scripts provide the actual RL training path.
