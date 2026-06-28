@@ -29,15 +29,20 @@ class PickPlaceStateMachine:
     def __init__(self):
         self.steps = PICK_PLACE_STEPS
 
-    def run_baseline(self, episode_id: int, plan: GraspPlan, placed_in_target: bool = True) -> EpisodeResult:
+    def run_baseline(
+        self,
+        episode_id: int,
+        plan: GraspPlan,
+        placed_in_target: bool = True,
+        fail_reason: str = "",
+    ) -> EpisodeResult:
         return EpisodeResult(
             episode_id=episode_id,
             workpiece_id=plan.workpiece_id,
             workpiece_type=plan.workpiece_type,
             target_bin=plan.target_bin,
             success=bool(placed_in_target),
-            fail_reason="" if placed_in_target else "placement_check_failed",
+            fail_reason="" if placed_in_target else fail_reason or "placement_check_failed",
             confidence=plan.confidence,
             cycle_steps=len(self.steps),
         )
-

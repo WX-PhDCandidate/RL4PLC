@@ -25,10 +25,13 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
         config_path: str | Path,
         run_dir: str | Path,
         episodes: int = 3,
-        fallback_visual: bool = True,
+        fallback_visual: bool = False,
+        assisted_fallback_on_failure: bool | None = None,
     ):
         super().__init__(config_path=config_path, run_dir=run_dir, episodes=episodes)
         self.fallback_visual = bool(fallback_visual)
+        if assisted_fallback_on_failure is not None:
+            self.config["episode"]["assisted_fallback_on_failure"] = bool(assisted_fallback_on_failure)
         self.pick_place_controller_cls = None
 
     def run(self) -> dict:
@@ -51,8 +54,13 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
 
             detection = self.perception.detect(workpiece)
             plan = self.planner.plan(workpiece, detection)
-            placed, trajectory = self._execute_franka_pick_place(prim, plan, workpiece, episode_id)
-            result = self.task.run_baseline(episode_id, plan, placed_in_target=placed)
+            placed, trajectory, fail_reason = self._execute_franka_pick_place(prim, plan, workpiece, episode_id)
+            result = self.task.run_baseline(
+                episode_id,
+                plan,
+                placed_in_target=placed,
+                fail_reason=fail_reason,
+            )
 
             detections.append(detection)
             plans.append(plan.to_dict())
@@ -122,24 +130,42 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
         plan: GraspPlan,
         workpiece: WorkpieceState,
         episode_id: int,
-    ) -> tuple[bool, list[dict[str, Any]]]:
+    ) -> tuple[bool, list[dict[str, Any]], str]:
         controller = self._new_pick_place_controller(episode_id)
         self._reset_pick_place_controller(controller)
 
         picking_position = np.array(workpiece.pose.position, dtype=float)
         placing_position = np.array(plan.place_pose.position, dtype=float)
         max_steps = int(self.config["episode"].get("max_motion_steps", 240))
+        no_lift_abort_steps = int(self.config["episode"].get("no_lift_abort_steps", max_steps))
+        lift_threshold = float(self.config["episode"].get("grasp_lift_threshold", 0.035))
         settle_steps = int(self.config["episode"].get("release_steps", 45))
         trajectory: list[dict[str, Any]] = []
+        initial_object_pose = self._read_prim_pose(prim)
+        lifted = False
+        fail_reason = ""
 
         done = False
+        executed_step = -1
         for step_index in range(max_steps):
+            executed_step = step_index
             action = self._forward_pick_place(controller, picking_position, placing_position)
             self.robot_controller.apply_action(action)
             self._record_controller_step(trajectory, episode_id, step_index, prim, plan)
             self._step(1)
+            object_pose = self._read_prim_pose(prim)
+            if object_pose.z >= initial_object_pose.z + lift_threshold:
+                lifted = True
             done = self._is_controller_done(controller)
             if done:
+                break
+            if step_index >= no_lift_abort_steps and not lifted:
+                fail_reason = "grasp_failed_not_lifted"
+                print(
+                    f"Physical grasp failed for {workpiece.id}: object was not lifted after "
+                    f"{step_index + 1} steps. No assisted motion will be used unless "
+                    "--assisted-fallback is passed."
+                )
                 break
 
         for _ in range(settle_steps):
@@ -147,11 +173,16 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
 
         object_pose = self._read_prim_pose(prim)
         placed = self._is_inside_target(object_pose, plan.target_bin)
+        if not fail_reason:
+            if not lifted:
+                fail_reason = "grasp_failed_not_lifted"
+            elif not placed:
+                fail_reason = "placement_check_failed"
         used_assisted_fallback = False
         if not placed and self.config["episode"].get("assisted_fallback_on_failure", True):
             print(
                 f"Official PickPlace did not place {workpiece.id} in {plan.target_bin}; "
-                "switching to assisted attachment fallback."
+                "switching to assisted attachment fallback because it was explicitly enabled."
             )
             used_assisted_fallback = True
             assisted_placed, assisted_trajectory = self._execute_visual_pick_place(
@@ -165,20 +196,24 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
             trajectory.extend(assisted_trajectory)
             object_pose = self._read_prim_pose(prim)
             placed = assisted_placed
+            fail_reason = "" if placed else fail_reason
 
         trajectory.append(
             {
                 "episode_id": episode_id,
                 "phase": "settled",
-                "step": max_steps if not done else step_index,
+                "step": executed_step + 1,
                 "controller_done": done,
+                "object_lifted": lifted,
+                "initial_object_pose": initial_object_pose.to_list(),
                 "object_pose": object_pose.to_list(),
                 "target_bin": plan.target_bin,
                 "placed_in_target": placed,
+                "fail_reason": "" if placed else fail_reason,
                 "assisted_fallback": used_assisted_fallback,
             }
         )
-        return placed, trajectory
+        return placed, trajectory, "" if placed else fail_reason
 
     def _new_pick_place_controller(self, episode_id: int):
         assert self.pick_place_controller_cls is not None
@@ -247,6 +282,7 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
                 "object_pose": self._read_prim_pose(prim).to_list(),
                 "place_pose": plan.place_pose.to_list(),
                 "target_bin": plan.target_bin,
+                "assisted_fallback": False,
             }
         )
 

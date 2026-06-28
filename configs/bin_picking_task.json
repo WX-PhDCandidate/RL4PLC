@@ -19,6 +19,10 @@
       "focal_length": 24.0
     }
   },
+  "randomization": {
+    "tilt_range": 0.0,
+    "yaw_range": 3.1415926
+  },
   "robot": {
     "name": "robot",
     "model": "franka_panda",
@@ -54,25 +58,25 @@
       "type": "red_box",
       "target_bin": "red",
       "shape": "box",
-      "size": [0.08, 0.06, 0.045],
-      "mass": 0.15,
+      "size": [0.055, 0.045, 0.04],
+      "mass": 0.06,
       "color": [0.80, 0.18, 0.15]
     },
     {
       "type": "blue_cylinder",
       "target_bin": "blue",
       "shape": "cylinder",
-      "radius": 0.035,
-      "height": 0.055,
-      "mass": 0.12,
+      "radius": 0.025,
+      "height": 0.045,
+      "mass": 0.05,
       "color": [0.18, 0.34, 0.78]
     },
     {
       "type": "green_prism",
       "target_bin": "green",
       "shape": "prism",
-      "size": [0.09, 0.065, 0.05],
-      "mass": 0.13,
+      "size": [0.06, 0.04, 0.045],
+      "mass": 0.055,
       "color": [0.18, 0.62, 0.32]
     }
   ],
@@ -89,7 +93,9 @@
     "attach_steps": 18,
     "release_steps": 45,
     "max_motion_steps": 1800,
-    "assisted_fallback_on_failure": true,
+    "no_lift_abort_steps": 650,
+    "grasp_lift_threshold": 0.035,
+    "assisted_fallback_on_failure": false,
     "success_radius": 0.14
   }
 }

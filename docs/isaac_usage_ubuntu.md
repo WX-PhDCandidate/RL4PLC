@@ -94,13 +94,13 @@ grasp plan, and tries to execute the action with Isaac Sim's official Franka
 `PickPlaceController`.
 
 If Isaac Sim cannot import or construct `PickPlaceController`, the script prints
-the reason and falls back to the visual attached-object baseline unless
-`--no-fallback-visual` is passed.
+the reason and fails clearly by default. Use `--fallback-visual` only when you
+intentionally want the old attached-object visual demo.
 
-If the official controller enters the source bin but does not actually carry the
-object into the target bin, the script keeps the run alive and switches to an
-assisted attachment fallback. This is intentional for the first closed-loop
-demo; the JSONL trajectory marks those segments with `assisted_fallback`.
+If the official controller enters the source bin but does not actually lift the
+object, the run is marked as `grasp_failed_not_lifted` and no object is moved by
+script. Use `--assisted-fallback` only for presentation/debug playback where a
+visual attached-object fallback is acceptable.
 
 ## 6. Outputs
 

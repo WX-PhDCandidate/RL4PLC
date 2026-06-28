@@ -17,7 +17,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--episodes", type=int, default=3, help="Number of workpieces to pick.")
     parser.add_argument("--run-dir", default="runs/franka_bin_pick", help="Output directory.")
     parser.add_argument("--headless", action="store_true", help="Run without GUI.")
-    parser.add_argument("--no-fallback-visual", action="store_true", help="Fail instead of using visual fallback.")
+    parser.add_argument(
+        "--fallback-visual",
+        action="store_true",
+        help="Use the old attached-object visual fallback if the official controller is unavailable.",
+    )
+    parser.add_argument(
+        "--no-fallback-visual",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--assisted-fallback",
+        action="store_true",
+        help="After a failed physical grasp, use assisted attachment to complete a visual demo.",
+    )
     parser.add_argument("--keep-open", action="store_true", help="Keep Isaac Sim open after the episodes finish.")
     parser.add_argument(
         "--post-run-seconds",
@@ -39,7 +53,8 @@ def main() -> None:
             config_path=args.config,
             run_dir=args.run_dir,
             episodes=args.episodes,
-            fallback_visual=not args.no_fallback_visual,
+            fallback_visual=bool(args.fallback_visual and not args.no_fallback_visual),
+            assisted_fallback_on_failure=bool(args.assisted_fallback),
         )
         summary = loop.run()
         print(summary)
