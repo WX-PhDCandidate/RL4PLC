@@ -35,72 +35,78 @@ def _cuboid_asset(
     )
 
 
-def _add_tray(scene, prim_root: str, center: tuple[float, float, float], color: tuple[float, float, float]) -> None:
+def _add_tray(scene, env_root: str, name: str, center: tuple[float, float, float], color: tuple[float, float, float]) -> None:
     cx, cy, cz = center
     sx, sy = 0.72, 0.54
     wall = 0.012
     scene.source_bin_floor = _cuboid_asset(
-        f"{prim_root}/Floor",
+        f"{env_root}/{name}_Floor",
         (cx, cy, cz + 0.006),
         (sx, sy, wall),
         (0.18, 0.20, 0.22),
     )
     scene.source_bin_front = _cuboid_asset(
-        f"{prim_root}/Front",
+        f"{env_root}/{name}_Front",
         (cx, cy - sy * 0.5, cz + 0.0125),
         (sx, wall, 0.025),
         color,
     )
     scene.source_bin_back = _cuboid_asset(
-        f"{prim_root}/Back",
+        f"{env_root}/{name}_Back",
         (cx, cy + sy * 0.5, cz + 0.0375),
         (sx, wall, 0.075),
         color,
     )
     scene.source_bin_left = _cuboid_asset(
-        f"{prim_root}/Left",
+        f"{env_root}/{name}_Left",
         (cx - sx * 0.5, cy, cz + 0.0225),
         (wall, sy, 0.045),
         color,
     )
     scene.source_bin_right = _cuboid_asset(
-        f"{prim_root}/Right",
+        f"{env_root}/{name}_Right",
         (cx + sx * 0.5, cy, cz + 0.0375),
         (wall, sy, 0.075),
         color,
     )
 
 
-def _add_target_bin(scene, prim_root: str, center: tuple[float, float, float], color: tuple[float, float, float]) -> None:
+def _add_target_bin(
+    scene,
+    env_root: str,
+    name: str,
+    center: tuple[float, float, float],
+    color: tuple[float, float, float],
+) -> None:
     cx, cy, cz = center
     sx, sy, sz = 0.34, 0.34, 0.14
     wall = 0.012
     scene.target_bin_floor = _cuboid_asset(
-        f"{prim_root}/Floor",
+        f"{env_root}/{name}_Floor",
         (cx, cy, cz + 0.006),
         (sx, sy, wall),
         color,
     )
     scene.target_bin_front = _cuboid_asset(
-        f"{prim_root}/Front",
+        f"{env_root}/{name}_Front",
         (cx, cy - sy * 0.5, cz + sz * 0.5),
         (sx, wall, sz),
         color,
     )
     scene.target_bin_back = _cuboid_asset(
-        f"{prim_root}/Back",
+        f"{env_root}/{name}_Back",
         (cx, cy + sy * 0.5, cz + sz * 0.5),
         (sx, wall, sz),
         color,
     )
     scene.target_bin_left = _cuboid_asset(
-        f"{prim_root}/Left",
+        f"{env_root}/{name}_Left",
         (cx - sx * 0.5, cy, cz + sz * 0.5),
         (wall, sy, sz),
         color,
     )
     scene.target_bin_right = _cuboid_asset(
-        f"{prim_root}/Right",
+        f"{env_root}/{name}_Right",
         (cx + sx * 0.5, cy, cz + sz * 0.5),
         (wall, sy, sz),
         color,
@@ -124,13 +130,15 @@ class RL4PLCFrankaBinPickEnvCfg(FrankaCubeLiftEnvCfg):
 
         _add_tray(
             self.scene,
-            "{ENV_REGEX_NS}/SourceTray",
+            "{ENV_REGEX_NS}",
+            "SourceTray",
             SOURCE_BIN_CENTER,
             (0.32, 0.34, 0.36),
         )
         _add_target_bin(
             self.scene,
-            "{ENV_REGEX_NS}/TargetBins/Red",
+            "{ENV_REGEX_NS}",
+            "TargetBin_Red",
             TARGET_BIN_CENTER,
             (0.65, 0.15, 0.12),
         )
