@@ -28,6 +28,8 @@ python scripts/list_isaaclab_tasks.py \
   --show-all
 ```
 
+The probe starts Isaac Lab headlessly before importing `isaaclab_tasks`, because modules such as `pxr` are provided by the Isaac/Kit runtime in some installations.
+
 Only tasks marked `OK` have `rsl_rl_cfg_entry_point` and can be trained through `scripts/reinforcement_learning/rsl_rl/train.py`.
 
 From this repository on the server:

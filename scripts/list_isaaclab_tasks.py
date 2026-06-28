@@ -15,6 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--library", default="rsl_rl", help="Filter by library config key, e.g. rsl_rl, skrl, robomimic.")
     parser.add_argument("--contains", default="Franka", help="Filter task ids by substring.")
     parser.add_argument("--show-all", action="store_true", help="Show tasks even if the selected library is missing.")
+    parser.add_argument("--gui", action="store_true", help="Open Isaac Sim GUI while probing. Default is headless.")
     return parser.parse_args()
 
 
@@ -31,6 +32,7 @@ def main() -> None:
             "--contains",
             args.contains,
             *(["--show-all"] if args.show_all else []),
+            *([] if args.gui else ["--headless"]),
         ],
     )
     raise SystemExit(run_command(command))
@@ -38,4 +40,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
