@@ -101,6 +101,12 @@ class IsaacBinPickingLoop:
         sx, sy, sz = raw["size"]
         px, py, pz = raw["position"]
         wall = float(raw.get("wall_thickness", 0.018))
+        wall_heights = {
+            "front": float(raw.get("front_wall_height", sz)),
+            "back": float(raw.get("back_wall_height", sz)),
+            "left": float(raw.get("left_wall_height", sz)),
+            "right": float(raw.get("right_wall_height", sz)),
+        }
         self.world.scene.add(
             FixedCuboid(
                 prim_path=f"{prim_root}/Floor",
@@ -111,10 +117,10 @@ class IsaacBinPickingLoop:
             )
         )
         walls = [
-            ("front", [px, py - sy / 2, pz + sz / 2], [sx, wall, sz]),
-            ("back", [px, py + sy / 2, pz + sz / 2], [sx, wall, sz]),
-            ("left", [px - sx / 2, py, pz + sz / 2], [wall, sy, sz]),
-            ("right", [px + sx / 2, py, pz + sz / 2], [wall, sy, sz]),
+            ("front", [px, py - sy / 2, pz + wall_heights["front"] / 2], [sx, wall, wall_heights["front"]]),
+            ("back", [px, py + sy / 2, pz + wall_heights["back"] / 2], [sx, wall, wall_heights["back"]]),
+            ("left", [px - sx / 2, py, pz + wall_heights["left"] / 2], [wall, sy, wall_heights["left"]]),
+            ("right", [px + sx / 2, py, pz + wall_heights["right"] / 2], [wall, sy, wall_heights["right"]]),
         ]
         for wall_name, pos, scale in walls:
             self.world.scene.add(

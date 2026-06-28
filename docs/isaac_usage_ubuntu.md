@@ -93,6 +93,11 @@ official Franka Panda. It then uses ground-truth pose detection plus a rule-base
 grasp plan, and tries to execute the action with Isaac Sim's official Franka
 `PickPlaceController`.
 
+The source bin is modeled as a shallow tray with a larger footprint and lower
+front/left walls than the rear walls. This is intentional: it gives the Franka
+gripper clearance to enter the bin before we move on to harder cluttered
+bin-picking cases.
+
 If Isaac Sim cannot import or construct `PickPlaceController`, the script prints
 the reason and fails clearly by default. Use `--fallback-visual` only when you
 intentionally want the old attached-object visual demo.
