@@ -14,23 +14,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--logs-root", default="~/isaac_ws/IsaacLab/logs/rsl_rl", help="Isaac Lab RL log root.")
     parser.add_argument("--task-hint", default="Franka", help="Substring filter for checkpoint path.")
     parser.add_argument("--list", action="store_true", help="List all matching checkpoints.")
+    parser.add_argument("--all", action="store_true", help="Ignore --task-hint and list/search all checkpoints.")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    task_hint = None if args.all else args.task_hint
     if args.list:
-        checkpoints = find_checkpoints(args.logs_root, task_hint=args.task_hint)
+        checkpoints = find_checkpoints(args.logs_root, task_hint=task_hint)
         for item in checkpoints:
             print(f"{item.path} step={item.step}")
         if not checkpoints:
             print("No checkpoints found.")
         return
 
-    checkpoint = find_latest_checkpoint(args.logs_root, task_hint=args.task_hint)
+    checkpoint = find_latest_checkpoint(args.logs_root, task_hint=task_hint)
     print(checkpoint.path)
 
 
 if __name__ == "__main__":
     main()
-
