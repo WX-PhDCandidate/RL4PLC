@@ -102,6 +102,31 @@ class FrankaWaypointController:
         except Exception as exc:
             print(f"Franka joint command skipped: {exc}")
 
+    def get_joint_positions(self) -> np.ndarray:
+        if self.robot is not None and hasattr(self.robot, "get_joint_positions"):
+            try:
+                joints = self.robot.get_joint_positions()
+                if joints is not None:
+                    self.current_joints = np.array(joints, dtype=float)
+            except Exception as exc:
+                print(f"Franka joint read skipped: {exc}")
+        return np.array(self.current_joints, dtype=float)
+
+    def apply_action(self, action) -> None:
+        if self.robot is None:
+            return
+        try:
+            if hasattr(self.robot, "apply_action"):
+                self.robot.apply_action(action)
+            elif self.controller is not None:
+                self.controller.apply_action(action)
+        except Exception as exc:
+            print(f"Franka action command skipped: {exc}")
+
+    @property
+    def gripper(self):
+        return getattr(self.robot, "gripper", None) if self.robot is not None else None
+
     def _resolve_usd_path(self) -> str:
         configured = self.config.get("usd_path", "")
         if configured and configured != "AUTO_FRANKA":

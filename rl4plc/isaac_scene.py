@@ -80,45 +80,50 @@ class IsaacBinPickingLoop:
         return summary
 
     def _add_bins(self) -> None:
-        FixedCuboid = self.core["FixedCuboid"]
         source = self.config["scene"]["source_bin"]
-        self.world.scene.add(
-            FixedCuboid(
-                prim_path="/World/SourceBin/Floor",
-                name="source_bin_floor",
-                position=np.array(source["position"]) + np.array([0.0, 0.0, -0.01]),
-                scale=np.array([source["size"][0], source["size"][1], 0.02]),
-                color=np.array([0.18, 0.20, 0.22]),
-            )
-        )
-        sx, sy, sz = source["size"]
-        px, py, pz = source["position"]
-        walls = [
-            ("front", [px, py - sy / 2, pz + sz / 2], [sx, 0.018, sz]),
-            ("back", [px, py + sy / 2, pz + sz / 2], [sx, 0.018, sz]),
-            ("left", [px - sx / 2, py, pz + sz / 2], [0.018, sy, sz]),
-            ("right", [px + sx / 2, py, pz + sz / 2], [0.018, sy, sz]),
-        ]
-        for name, pos, scale in walls:
-            self.world.scene.add(
-                FixedCuboid(
-                    prim_path=f"/World/SourceBin/{name}",
-                    name=f"source_bin_{name}",
-                    position=np.array(pos),
-                    scale=np.array(scale),
-                    color=np.array([0.32, 0.34, 0.36]),
-                )
-            )
+        self._add_open_bin("/World/SourceBin", "source_bin", source, [0.18, 0.20, 0.22], [0.32, 0.34, 0.36])
 
         colors = {"red": [0.65, 0.15, 0.12], "blue": [0.12, 0.22, 0.70], "green": [0.14, 0.50, 0.25]}
         for bin_name, raw in self.config["scene"]["target_bins"].items():
+            color = colors.get(bin_name, [0.5, 0.5, 0.5])
+            wall_color = [min(1.0, value + 0.12) for value in color]
+            self._add_open_bin(f"/World/TargetBins/{bin_name}", f"target_bin_{bin_name}", raw, color, wall_color)
+
+    def _add_open_bin(
+        self,
+        prim_root: str,
+        name_root: str,
+        raw: dict,
+        floor_color: list[float],
+        wall_color: list[float],
+    ) -> None:
+        FixedCuboid = self.core["FixedCuboid"]
+        sx, sy, sz = raw["size"]
+        px, py, pz = raw["position"]
+        wall = float(raw.get("wall_thickness", 0.018))
+        self.world.scene.add(
+            FixedCuboid(
+                prim_path=f"{prim_root}/Floor",
+                name=f"{name_root}_floor",
+                position=np.array([px, py, pz - wall * 0.5]),
+                scale=np.array([sx, sy, wall]),
+                color=np.array(floor_color),
+            )
+        )
+        walls = [
+            ("front", [px, py - sy / 2, pz + sz / 2], [sx, wall, sz]),
+            ("back", [px, py + sy / 2, pz + sz / 2], [sx, wall, sz]),
+            ("left", [px - sx / 2, py, pz + sz / 2], [wall, sy, sz]),
+            ("right", [px + sx / 2, py, pz + sz / 2], [wall, sy, sz]),
+        ]
+        for wall_name, pos, scale in walls:
             self.world.scene.add(
                 FixedCuboid(
-                    prim_path=f"/World/TargetBins/{bin_name}",
-                    name=f"target_bin_{bin_name}",
-                    position=np.array(raw["position"]),
-                    scale=np.array(raw["size"]),
-                    color=np.array(colors.get(bin_name, [0.5, 0.5, 0.5])),
+                    prim_path=f"{prim_root}/{wall_name}",
+                    name=f"{name_root}_{wall_name}",
+                    position=np.array(pos),
+                    scale=np.array(scale),
+                    color=np.array(wall_color),
                 )
             )
 

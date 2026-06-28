@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+
 
 def import_simulation_app():
     try:
@@ -73,3 +75,20 @@ def import_camera():
         from omni.isaac.sensor import Camera  # type: ignore
 
         return Camera
+
+
+def import_pick_place_controller():
+    candidates = [
+        "isaacsim.robot.manipulators.examples.franka.controllers.pick_place_controller",
+        "isaacsim.robot.manipulators.controllers.pick_place_controller",
+        "omni.isaac.franka.controllers.pick_place_controller",
+        "omni.isaac.franka.controllers",
+    ]
+    errors: list[str] = []
+    for module_name in candidates:
+        try:
+            module = importlib.import_module(module_name)
+            return getattr(module, "PickPlaceController")
+        except Exception as exc:
+            errors.append(f"{module_name}: {exc}")
+    raise ImportError("PickPlaceController import failed:\n" + "\n".join(errors))

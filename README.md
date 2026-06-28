@@ -24,6 +24,7 @@ configs/bin_picking_task.json       Task, scene and robot configuration
 rl4plc/                            Pure Python task logic
 scripts/run_mock_loop.py            Runs the loop without Isaac Sim
 scripts/run_isaac_loop.py           Runs the loop inside Isaac Sim Python
+scripts/run_franka_bin_pick.py      Runs the first Franka grasp-and-drop bin-pick demo
 docs/isaac_usage_ubuntu.md          Ubuntu Isaac Sim usage notes
 tests/                              Lightweight tests for the baseline logic
 ```
@@ -53,6 +54,18 @@ For GUI:
 ```bash
 /path/to/isaac-sim/python.sh scripts/run_isaac_loop.py --episodes 3
 ```
+
+First Franka grasp-and-drop demo:
+
+```bash
+/path/to/isaac-sim/python.sh scripts/run_franka_bin_pick.py --episodes 3 --keep-open
+```
+
+This demo keeps the ground-truth perception and rule-based grasp planning path,
+then tries to execute the pick/drop action with Isaac Sim's official Franka
+`PickPlaceController`. If the installed Isaac Sim version does not expose that
+controller, the script falls back to the attached-object visual baseline and
+prints the import or construction error.
 
 Outputs are written to `runs/`.
 The Isaac loop additionally writes `trajectory.jsonl`, which records baseline TCP and object poses by phase.

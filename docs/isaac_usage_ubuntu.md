@@ -73,7 +73,31 @@ Or keep it open for a fixed time:
 
 If your Isaac Sim path is different, replace `~/isaacsim/python.sh`.
 
-## 5. Outputs
+## 5. Run the First Franka Bin-Pick Demo
+
+After the PPO lift task can train and play back, run the project-level
+grasp-and-drop demo:
+
+```bash
+~/isaacsim/python.sh scripts/run_franka_bin_pick.py --episodes 3 --keep-open
+```
+
+Headless run:
+
+```bash
+~/isaacsim/python.sh scripts/run_franka_bin_pick.py --episodes 10 --headless
+```
+
+This script creates the source bin, three target bins, random workpieces and the
+official Franka Panda. It then uses ground-truth pose detection plus a rule-based
+grasp plan, and tries to execute the action with Isaac Sim's official Franka
+`PickPlaceController`.
+
+If Isaac Sim cannot import or construct `PickPlaceController`, the script prints
+the reason and falls back to the visual attached-object baseline unless
+`--no-fallback-visual` is passed.
+
+## 6. Outputs
 
 The scripts write:
 
@@ -83,9 +107,10 @@ runs/isaac/detections.jsonl
 runs/isaac/grasp_plans.jsonl
 runs/isaac/trajectory.jsonl
 runs/isaac/summary.json
+runs/franka_bin_pick/franka_pickplace_trajectory.jsonl
 ```
 
-## 6. Robot USD
+## 7. Robot USD
 
 By default, the script uses Isaac Sim's official Franka Panda manipulator class when available. This avoids guessing the articulation root path inside the USD. If that class is unavailable, it falls back to loading the Franka USD as a visual reference only. To override the visual USD fallback, edit:
 
@@ -101,9 +126,9 @@ Example:
   "usd_path": "/home/user/assets/robots/my_robot.usd"
 ```
 
-The current baseline drives the Franka articulation through preset joint waypoints while keeping the TCP marker and workpiece trajectory explicit. The next development step is to replace these waypoint presets with IK and then an Isaac Lab RL policy.
+The basic Isaac loop drives the Franka articulation through preset joint waypoints while keeping the TCP marker and workpiece trajectory explicit. The Franka bin-pick demo uses Isaac Sim's official PickPlace controller when available. The next development step is to replace the rule-based target pose with an Isaac Lab policy trained for correct-bin placement.
 
-## 7. Known Isaac Sim Runtime Note
+## 8. Known Isaac Sim Runtime Note
 
 If Isaac Sim reports an error similar to:
 

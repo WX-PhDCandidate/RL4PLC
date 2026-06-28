@@ -21,7 +21,9 @@ class WorkpieceRandomizer:
         sx, sy, sz = self.source_bin["size"]
         x = bx + self.rng.uniform(-sx * 0.32, sx * 0.32)
         y = by + self.rng.uniform(-sy * 0.28, sy * 0.28)
-        z = bz + sz + max(spec.size[2], spec.height or spec.size[2]) * 0.5 + self.rng.uniform(0.005, 0.025)
+        half_height = max(spec.size[2], spec.height or spec.size[2]) * 0.5
+        stack_lift = self.rng.uniform(0.005, min(0.045, sz * 0.25))
+        z = bz + half_height + stack_lift
         pose = Pose6D(
             x=x,
             y=y,
@@ -31,4 +33,3 @@ class WorkpieceRandomizer:
             rz=self.rng.uniform(-math.pi, math.pi),
         )
         return WorkpieceState(id=f"episode_{episode_id:05d}_{spec.type}", spec=spec, pose=pose)
-
