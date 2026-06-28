@@ -147,6 +147,25 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
 
         object_pose = self._read_prim_pose(prim)
         placed = self._is_inside_target(object_pose, plan.target_bin)
+        used_assisted_fallback = False
+        if not placed and self.config["episode"].get("assisted_fallback_on_failure", True):
+            print(
+                f"Official PickPlace did not place {workpiece.id} in {plan.target_bin}; "
+                "switching to assisted attachment fallback."
+            )
+            used_assisted_fallback = True
+            assisted_placed, assisted_trajectory = self._execute_visual_pick_place(
+                prim=prim,
+                plan=plan,
+                workpiece=workpiece,
+                episode_id=episode_id,
+            )
+            for item in assisted_trajectory:
+                item["assisted_fallback"] = True
+            trajectory.extend(assisted_trajectory)
+            object_pose = self._read_prim_pose(prim)
+            placed = assisted_placed
+
         trajectory.append(
             {
                 "episode_id": episode_id,
@@ -156,6 +175,7 @@ class FrankaControllerBinPickLoop(IsaacBinPickingLoop):
                 "object_pose": object_pose.to_list(),
                 "target_bin": plan.target_bin,
                 "placed_in_target": placed,
+                "assisted_fallback": used_assisted_fallback,
             }
         )
         return placed, trajectory

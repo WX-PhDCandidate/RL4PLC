@@ -65,7 +65,10 @@ This demo keeps the ground-truth perception and rule-based grasp planning path,
 then tries to execute the pick/drop action with Isaac Sim's official Franka
 `PickPlaceController`. If the installed Isaac Sim version does not expose that
 controller, the script falls back to the attached-object visual baseline and
-prints the import or construction error.
+prints the import or construction error. If the controller reaches the source
+bin but does not actually place the object in the target bin, the script also
+uses an assisted attachment fallback so the first demo still completes the
+grasp-transfer-release loop.
 
 Outputs are written to `runs/`.
 The Isaac loop additionally writes `trajectory.jsonl`, which records baseline TCP and object poses by phase.

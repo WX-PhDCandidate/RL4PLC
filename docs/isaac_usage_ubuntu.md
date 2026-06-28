@@ -97,6 +97,11 @@ If Isaac Sim cannot import or construct `PickPlaceController`, the script prints
 the reason and falls back to the visual attached-object baseline unless
 `--no-fallback-visual` is passed.
 
+If the official controller enters the source bin but does not actually carry the
+object into the target bin, the script keeps the run alive and switches to an
+assisted attachment fallback. This is intentional for the first closed-loop
+demo; the JSONL trajectory marks those segments with `assisted_fallback`.
+
 ## 6. Outputs
 
 The scripts write:
