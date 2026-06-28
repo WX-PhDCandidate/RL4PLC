@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from rl4plc.checkpoints import find_latest_checkpoint
 from rl4plc.isaaclab_workflows import DEFAULT_IK_TASK, DEFAULT_TASK, build_play_command, find_isaaclab_root, run_command
 
 
@@ -17,6 +18,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--library", default="rsl_rl", choices=["rsl_rl", "skrl"], help="RL workflow library.")
     parser.add_argument("--num-envs", type=int, default=1, help="Parallel environments for playback.")
     parser.add_argument("--checkpoint", default=None, help="Checkpoint path. If omitted, Isaac Lab uses workflow default.")
+    parser.add_argument("--latest", action="store_true", help="Use latest checkpoint from --logs-root.")
+    parser.add_argument("--logs-root", default="~/isaac_ws/IsaacLab/logs/rsl_rl", help="Isaac Lab rsl_rl logs root.")
+    parser.add_argument("--task-hint", default=None, help="Substring used when searching latest checkpoint.")
     parser.add_argument("--headless", action="store_true", help="Run without GUI.")
     parser.add_argument("--video", action="store_true", help="Record playback video if workflow supports it.")
     parser.add_argument("--dry-run", action="store_true", help="Print command without executing it.")
@@ -28,13 +32,18 @@ def main() -> None:
     args = parse_args()
     root = find_isaaclab_root(args.isaaclab_root, require_exists=not args.dry_run)
     task = DEFAULT_IK_TASK if args.ik else args.task
+    checkpoint = args.checkpoint
+    if args.latest:
+        hint = args.task_hint or task
+        checkpoint = str(find_latest_checkpoint(args.logs_root, task_hint=hint).path)
+        print(f"Using latest checkpoint: {checkpoint}")
     extra_args = args.extra_args[1:] if args.extra_args[:1] == ["--"] else args.extra_args
     command = build_play_command(
         isaaclab_root=root,
         task=task,
         library=args.library,
         num_envs=args.num_envs,
-        checkpoint=args.checkpoint,
+        checkpoint=checkpoint,
         headless=args.headless,
         video=args.video,
         validate_paths=not args.dry_run,

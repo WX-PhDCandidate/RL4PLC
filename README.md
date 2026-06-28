@@ -74,6 +74,7 @@ python scripts/play_franka_lift.py --isaaclab-root ~/isaac_ws/IsaacLab --task Is
 ```
 
 See [docs/rl_training.md](docs/rl_training.md).
+After training, see [docs/after_ppo.md](docs/after_ppo.md) for latest-checkpoint playback and the custom bin-picking migration plan.
 
 ## Research Roadmap
 

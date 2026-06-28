@@ -1,0 +1,57 @@
+{
+  "task_name": "RL4PLC-Franka-BinPick-v0",
+  "base_task": "Isaac-Lift-Cube-Franka-v0",
+  "migration_stage": "reward_and_observation_spec",
+  "observations": {
+    "policy": [
+      "franka_joint_positions",
+      "franka_joint_velocities",
+      "end_effector_pose",
+      "target_workpiece_pose",
+      "target_bin_pose",
+      "gripper_width",
+      "is_object_attached"
+    ],
+    "critic": [
+      "workpiece_type_one_hot",
+      "all_workpiece_poses",
+      "contact_state",
+      "drop_state"
+    ],
+    "future_vision": [
+      "rgbd_embedding",
+      "point_cloud_embedding",
+      "segmented_object_pose"
+    ]
+  },
+  "actions": {
+    "type": "joint_position_delta",
+    "dimensions": 8,
+    "description": "Franka 7 arm joints plus gripper command. Later replace with IK delta pose if stable."
+  },
+  "rewards": {
+    "reach_object": { "weight": 1.0, "description": "Negative distance from end effector to target workpiece." },
+    "grasp_success": { "weight": 5.0, "description": "Object lifted above source bin while gripper closes." },
+    "lift_height": { "weight": 2.0, "description": "Reward stable lift after grasp." },
+    "move_to_target_bin": { "weight": 2.5, "description": "Object approaches correct bin center." },
+    "correct_drop": { "weight": 10.0, "description": "Object released inside target bin matching workpiece type." },
+    "wrong_bin": { "weight": -8.0, "description": "Object released in a wrong bin." },
+    "drop_or_collision": { "weight": -4.0, "description": "Dropped object or unsafe collision before placement." },
+    "action_smoothness": { "weight": -0.01, "description": "Penalty on large action deltas." },
+    "episode_timeout": { "weight": -2.0, "description": "Penalty when task times out." }
+  },
+  "randomization": {
+    "workpiece_type": ["red_box", "blue_cylinder", "green_prism"],
+    "source_bin_xy_range": [0.13, 0.09],
+    "yaw_range_rad": [-3.1416, 3.1416],
+    "mass_scale": [0.8, 1.2],
+    "friction_scale": [0.7, 1.4],
+    "lighting": true,
+    "camera_noise": false
+  },
+  "success": {
+    "condition": "workpiece_center_inside_correct_bin && object_settled",
+    "settle_time_s": 0.5
+  }
+}
+
