@@ -33,6 +33,9 @@ def main() -> None:
     script = Path(args.workflow_script).expanduser().resolve()
     if not script.exists():
         raise FileNotFoundError(f"Isaac Lab workflow script not found: {script}")
+    workflow_dir = str(script.parent)
+    if workflow_dir not in sys.path:
+        sys.path.insert(0, workflow_dir)
 
     print(f"Registered Isaac Lab task: {task_id} (base: {args.base_task})")
     print(f"Running workflow: {script}")
